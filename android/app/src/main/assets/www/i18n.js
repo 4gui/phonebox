@@ -2834,7 +2834,7 @@
     if (s === undefined) return key;
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
-        s = s.replaceAll(`{${k}}`, v == null ? '' : String(v));
+        s = s.split(`{${k}}`).join(v == null ? '' : String(v));
       }
     }
     return s;
