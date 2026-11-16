@@ -1,0 +1,102 @@
+/* Generated from style.css and controls.css by cq-fallback.js — do not edit by hand.
+   WebView below Chromium 105 has no container query units; cq83.js measures each widget and sets
+   --cqw / --cqh on it, and these rules read those variables instead. */
+@supports not (container-type: size) {
+.card { border-radius: clamp(10px, calc(min(var(--cqw), var(--cqh)) * 7), 20px); }
+.status { font-size: clamp(10px, calc(var(--cqh) * 5), 12.5px); }
+.clock { font-size: min(calc(var(--tf, .6) * calc(var(--cqh) * 100)), calc(var(--cqw) * 30)); }
+.date { font-size: clamp(11px, calc(var(--cqh) * 7.5), 19px); }
+.wx { margin-top: clamp(2px, calc(var(--cqh) * 4), 14px); }
+.wx-icon { font-size: clamp(18px, calc(var(--cqh) * 13), 34px); }
+.wx-temp { font-size: clamp(18px, calc(var(--cqh) * 13), 34px); }
+.wx-meta { font-size: clamp(10px, calc(var(--cqh) * 5.4), 13px); }
+.w-weather { padding: 0 clamp(8px, calc(min(var(--cqw), var(--cqh)) * 6), 18px); }
+.w-weather .wx { gap: calc(var(--cqw) * 3); }
+.w-weather .wx-icon, .w-weather .wx-temp { font-size: min(calc(var(--cqh) * 40), calc(var(--cqw) * 18)); }
+.w-weather .wx-meta { font-size: clamp(10px, calc(var(--cqh) * 13), 15px); }
+.fc-i { font-size: clamp(10px, calc(var(--cqh) * 8), 14px); }
+.w-media { padding: clamp(8px, calc(var(--cqh) * 4), 16px) clamp(10px, calc(var(--cqw) * 3), 18px); }
+.m-top { gap: clamp(8px, calc(var(--cqw) * 3), 18px); }
+.art-wrap { height: min(calc(var(--cqh) * 58), calc(var(--cqw) * 34)); border-radius: clamp(8px, calc(var(--cqh) * 6), 18px); }
+.m-app { font-size: clamp(9px, calc(var(--cqh) * 4.5), 13px); }
+.m-title { font-size: clamp(13px, calc(var(--cqh) * 9), 30px); }
+.m-artist { font-size: clamp(11px, calc(var(--cqh) * 6), 19px); }
+.w-stat { padding: clamp(5px, calc(var(--cqh) * 9), 10px) clamp(8px, calc(var(--cqw) * 6), 12px); }
+.t-label { font-size: clamp(9px, calc(var(--cqh) * 12), 11px); }
+.t-val b { font-size: clamp(16px, calc(var(--cqh) * 30), 40px); }
+.t-val small { font-size: clamp(10px, calc(var(--cqh) * 14), 15px); }
+.t-sub { font-size: clamp(9.5px, calc(var(--cqh) * 13), 13px); }
+.g-dial { height: min(calc(var(--cqh) * 66), calc(var(--cqw) * 88)); }
+.g-val { font-size: min(calc(var(--cqh) * 15), calc(var(--cqw) * 22)); }
+.g-label { font-size: clamp(9px, calc(var(--cqh) * 6), 13px); }
+.g-sub { font-size: clamp(9px, calc(var(--cqh) * 5.4), 12px); }
+.s-main b { font-size: clamp(18px, calc(var(--cqh) * 15), 34px); }
+.s-main .multi b { font-size: clamp(13px, calc(var(--cqh) * 10), 20px); }
+.q-dial { width: min(calc(var(--cqh) * 50), 170px); }
+.q-pct { font-size: min(calc(var(--cqh) * 10), 28px); }
+.q-ov-val { font-size: clamp(18px, calc(var(--cqh) * 8), 26px); }
+.key .k-icon { font-size: clamp(16px, calc(min(var(--cqw), var(--cqh)) * 7), 30px); }
+.key .k-label { font-size: clamp(10px, calc(min(var(--cqw), var(--cqh)) * 3.6), 14px); }
+.w-button .key .k-icon { font-size: min(calc(var(--cqh) * 40), calc(var(--cqw) * 30)); }
+.w-button .key .k-label { font-size: clamp(10px, calc(var(--cqh) * 15), 18px); }
+.wc-n { font-size: clamp(9.5px, calc(var(--cqh) * 10), 13px); }
+.wc-t { font-size: min(calc(var(--cqh) * 36), calc(var(--cqw) * 36)); }
+.wc-row.h12 .wc-t { font-size: min(calc(var(--cqh) * 36), calc(var(--cqw) * 28)); }
+.wc-s { font-size: clamp(9px, calc(var(--cqh) * 9), 12px); }
+.wc-row.vert .wc-t { font-size: clamp(14px, calc(var(--cqh) * 9), 30px); }
+.cal { font-size: clamp(10px, calc(var(--cqh) * 6), 15px); }
+.w-pomodoro .g-dial { height: min(calc(var(--cqh) * 52), calc(var(--cqw) * 80)); }
+.pb { width: clamp(30px, calc(var(--cqh) * 14), 46px); height: clamp(30px, calc(var(--cqh) * 14), 46px); font-size: clamp(13px, calc(var(--cqh) * 6), 19px); }
+.cd-l { font-size: clamp(10px, calc(var(--cqh) * 11), 14px); }
+.cd-v { font-size: min(calc(var(--cqh) * 38), calc(var(--cqw) * 17)); }
+.cd-s { font-size: clamp(9.5px, calc(var(--cqh) * 10), 13px); }
+.w-note { padding: clamp(8px, calc(min(var(--cqw), var(--cqh)) * 7), 16px); }
+.note-t { font-size: clamp(11px, calc(var(--nf) * calc(min(var(--cqw), var(--cqh)) * 1)), 44px); }
+.lbl-t { font-size: min(calc(var(--cqh) * 55), calc(var(--cqw) * 12)); }
+.cmd-o.big { font: 300 min(calc(var(--cqh) * 42), calc(var(--cqw) * 14))/1 Roboto, sans-serif; }
+.pv { font-size: min(calc(var(--cqh) * 42), calc(var(--cqw) * 20)); }
+.ps { font-size: clamp(10px, calc(var(--cqh) * 10), 14px); }
+.push-gauge .g-dial { height: min(calc(var(--cqh) * 70), calc(var(--cqw) * 80)); }
+.analog { width: min(calc(var(--cqh) * 100), calc(var(--cqw) * 100)); }
+.w-analog:has(.an-l) .analog { width: min(calc(var(--cqh) * 88), calc(var(--cqw) * 100)); }
+.an-l { font-size: clamp(10px, calc(var(--cqh) * 6), 14px); }
+.sw-t { font-size: min(calc(var(--cqh) * 30), calc(var(--cqw) * 15)); }
+.w-timer .g-dial { height: min(calc(var(--cqh) * 38), calc(var(--cqw) * 60)); }
+.ct-n { font-size: min(calc(var(--cqh) * 48), calc(var(--cqw) * 30)); }
+.br-ball { width: min(calc(var(--cqh) * 84), calc(var(--cqw) * 84)); }
+.br-w { font-size: clamp(13px, calc(var(--cqh) * 9), 26px); }
+.br-c { font-size: clamp(18px, calc(var(--cqh) * 16), 52px); }
+.w-quote { padding: clamp(8px, calc(min(var(--cqw), var(--cqh)) * 6), 18px) clamp(10px, calc(min(var(--cqw), var(--cqh)) * 6), 20px); }
+.qt-mark { font-size: min(calc(var(--cqh) * 60), calc(var(--cqw) * 30)); }
+.qt-q { font-size: clamp(12px, calc(var(--qf, 1) * calc(var(--cqh) * 11)), 30px); }
+.qt-a { font-size: clamp(10px, calc(var(--cqh) * 7), 14px); }
+.ag-big-s { font-size: clamp(11px, calc(var(--cqh) * 16), 15px); }
+.ag-big-t { font-size: clamp(14px, calc(var(--cqh) * 26), 26px); }
+.w-onair { gap: clamp(2px, calc(var(--cqh) * 6), 12px); }
+.oa-sign { font-size: min(calc(var(--cqh) * 26), calc(var(--cqw) * 13)); border: max(2px, calc(var(--cqh) * 1.6)) solid currentColor; }
+.oa-sub { font-size: clamp(10px, calc(var(--cqh) * 9), 14px); }
+.vb-v { font-size: clamp(12px, calc(var(--cqh) * 9), 22px); }
+.w-volume.vert .vb { width: min(46px, calc(var(--cqw) * 40)); }
+.sun-row { font-size: clamp(10px, calc(var(--cqh) * 7), 13px); }
+.moon { font-size: clamp(10px, calc(var(--cqh) * 7), 13px); }
+.aq-v { font-size: min(calc(var(--cqh) * 40), calc(var(--cqw) * 22)); }
+.aq-c { font-size: clamp(11px, calc(var(--cqh) * 8), 15px); }
+.fx-i { font-size: clamp(11px, calc(var(--cqh) * 7), 15px); }
+.cc-pct { font-size: clamp(11px, calc(min(var(--cqw), var(--cqh)) * 11), 38px); }
+.nu-title { font-size: clamp(16px, calc(min(var(--cqw), var(--cqh)) * 9), 34px); }
+.wc-lead { font-size: clamp(12px, calc(min(var(--cqw), var(--cqh)) * 6), 22px); }
+.wc-main { font-size: clamp(22px, calc(min(var(--cqw), var(--cqh)) * 15), 76px); }
+.wc-date { font-size: clamp(11px, calc(min(var(--cqw), var(--cqh)) * 5), 18px); }
+.q-rings-grid .q-dial { width: min(calc(var(--cqh) * 34), 86px); height: min(calc(var(--cqh) * 34), 86px); }
+.q-rings-grid .q-pct { font-size: min(calc(var(--cqh) * 10), 22px); }
+.gd-big b { font-size: clamp(18px, calc(var(--cqh) * 15), 34px); }
+@supports not (aspect-ratio: 1) {
+  .art-wrap { width: min(calc(var(--cqh) * 58), calc(var(--cqw) * 34)); }
+  .g-dial { width: min(calc(var(--cqh) * 66), calc(var(--cqw) * 88)); }
+  .q-dial { height: min(calc(var(--cqh) * 50), 170px); }
+  .analog { height: min(calc(var(--cqh) * 100), calc(var(--cqw) * 100)); }
+  .br-ball { height: min(calc(var(--cqh) * 84), calc(var(--cqw) * 84)); }
+  .cc-wrap { width: 100%; }
+  .mo-disc { width: 100%; }
+}
+}
