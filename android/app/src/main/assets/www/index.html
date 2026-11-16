@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="controls.css">
 <link rel="stylesheet" href="appearance.css">
-<link rel="stylesheet" href="cq83.css">
 </head>
 <body>
 <!-- Pages and widgets are built by main.js and widgets/*.js from the layout designed in the agent's settings page. -->
@@ -105,9 +104,6 @@
   window.addEventListener('error', function (e) {
     var t = e && e.target;
     if (t && t !== window && (t.src || t.href)) { window.__pbFail('LOAD FAIL ' + (t.src || t.href)); return; }
-    // Browsers raise this as an error event when a ResizeObserver callback writes layout it observes.
-    // It is a throttle notice, not a failure: the loop is broken and the page keeps running.
-    if (e && /ResizeObserver loop/i.test(e.message || '')) return;
     if (e && e.message) window.__pbFail('ERR ' + e.message + (e.filename ? '  ' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
   }, true);
   window.addEventListener('unhandledrejection', function (e) {
@@ -129,7 +125,6 @@
 })();
 </script>
 <script src="compat.js"></script>
-<script src="cq83.js"></script>
 <script src="i18n.js"></script>
 <script type="module" src="main.js"></script>
 </body>

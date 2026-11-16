@@ -458,8 +458,11 @@ export function keyButton(s) {
 
 // ---------------------------------------------------------------- media (shared state, any number of widgets)
 export let media = null;          // last media state + the time it was received
-export let volDragging = false;
-export const setVolDragging = (v) => { volDragging = v; };
+export let volDragging = null;
+export function setVolDragging(control, dragging) {
+  if (dragging) volDragging = control;
+  else if (volDragging === control) volDragging = null;
+}
 export const setMediaState = (m) => {
   if (D.state) D.state.media = m || null;
   media = m ? { ...m, at: performance.now() } : null;
@@ -903,7 +906,7 @@ export function handleEvent(e) {
   else if (e.kind === 'reload') location.reload();
 }
 
-export const WIDGET_ICONS = { rules: '⚡', chargecare: '🔋', nextup: '⏭️', moon: '🌙', wordclock: '🔤', clock: '🕒', weather: '⛅', forecast: '🌦️', media: '🎵', stat: '📈', gauge: '⏲️', chart: '📊', meters: '💾', gpu: '🎮', quotas: '✳️', sessions: '🤖',
+export const WIDGET_ICONS = { discord: '💬', rules: '⚡', chargecare: '🔋', nextup: '⏭️', moon: '🌙', wordclock: '🔤', clock: '🕒', weather: '⛅', forecast: '🌦️', media: '🎵', stat: '📈', gauge: '⏲️', chart: '📊', meters: '💾', gpu: '🎮', quotas: '✳️', sessions: '🤖',
   github: '🐙', processes: '⚙️', shortcuts: '🎛️', button: '🔘', worldclock: '🌍', calendar: '📅', pomodoro: '🍅', countdown: '⏳', note: '📝', command: '💻',
   push: '📡', inbox: '📬', label: '🔤', analog: '🕰️', progress: '📆', stopwatch: '⏱️', timer: '⏲️', counter: '🔢', breathe: '🫁', quote: '💬',
   checklist: '✅', battery: '🔋', topprocs: '🔥', quotaring: '🎯', volume: '🔊', sun: '🌅', air: '🍃', hackernews: '📰', exchange: '💱', crypto: '🪙', image: '🖼️', pcswitch: '🖥️' };
@@ -982,8 +985,8 @@ export function activeSet() { return new Set([curPage - 1, curPage, curPage + 1]
 export const pageOf = (kind) => mounted.filter((m) => m.pi === curPage && m.def.needs.includes(kind)).length > 0;
 export const anyNeeds = (kind) => mounted.some((m) => m.def.needs.includes(kind));
 
-export function runUpdate(m, kind) {
-  try { m.inst.update?.(kind); } catch (e) { console.warn(m.ctx.w.type, e); }
+export function runUpdate(m, kind, background = false) {
+  try { m.inst.update?.(kind, background); } catch (e) { console.warn(m.ctx.w.type, e); }
 }
 
 /** Delivers fresh data to the widgets on the visible pages; the others catch up when they come into view. */
@@ -992,7 +995,9 @@ export function emit(kind) {
   for (const m of mounted) {
     if (!m.def.needs.includes(kind)) continue;
     // alarms (timer, pomodoro) must go off on whatever page is showing, so those widgets get every tick
-    if (act.has(m.pi) || (m.def.always && kind === 'tick')) runUpdate(m, kind); else m.dirty = true;
+    if (act.has(m.pi)) runUpdate(m, kind);
+    else if (m.def.always && kind === 'tick') runUpdate(m, kind, true);
+    else m.dirty = true;
   }
 }
 

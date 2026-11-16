@@ -30,6 +30,8 @@ public sealed class AgentConfig
     public HomeAssistantConfig HomeAssistant { get; set; } = new();
     /// <summary>OBS Studio's WebSocket server (obs-websocket 5).</summary>
     public ObsConfig Obs { get; set; } = new();
+    /// <summary>Discord desktop app (local IPC): the developer application's client id and secret (the secret never goes to the phone).</summary>
+    public DiscordConfig Discord { get; set; } = new();
 
     /// <summary>The pages a phone shows: its own selection (Settings › Phones), or all of them.</summary>
     public IEnumerable<PageConfig> PagesFor(string? deviceId)
@@ -288,6 +290,13 @@ public sealed class ObsConfig
     public string? Password { get; set; }
 }
 
+public sealed class DiscordConfig
+{
+    public bool Enabled { get; set; }
+    public string? ClientId { get; set; }
+    public string? ClientSecret { get; set; }
+}
+
 public sealed class HomeAssistantConfig
 {
     public string? Url { get; set; }
@@ -408,8 +417,9 @@ public sealed partial class ConfigStore(string path)
 
         lock (_lock)
         {
-            if (expectedVersion is { } expected && File.Exists(path) && File.GetLastWriteTimeUtc(path).Ticks != expected) return Conflict;
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+            if (expectedVersion is { } expected && File.GetLastWriteTimeUtc(path).Ticks != expected) return Conflict;
+            var directory = System.IO.Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
             var tmp = path + ".tmp";
             // owner-only on macOS/Linux: the file holds the Wi-Fi, webhook and Home Assistant keys
             AppPaths.WriteAllTextPrivate(tmp, JsonSerializer.Serialize(cfg, WriteOpts));
@@ -426,7 +436,7 @@ public sealed partial class ConfigStore(string path)
     {
         c.Weather ??= new();
         c.CodexBar ??= new();
-        c.CodexBar.Providers = (c.CodexBar.Providers ?? []).Where(p => p is "claude" or "codex" or "antigravity").Distinct().ToArray();
+        c.CodexBar.Providers = (c.CodexBar.Providers ?? []).Where(p => p is "claude" or "codex" or "antigravity" or "workbuddy").Distinct().ToArray();
         c.CodexBar.PageSize = Math.Clamp(c.CodexBar.PageSize, 0, 6);
         c.CodexBar.RotateInterval = Math.Clamp(c.CodexBar.RotateInterval, 2, 300);
         c.Night ??= new();
@@ -487,6 +497,9 @@ public sealed partial class ConfigStore(string path)
         c.Phones = (c.Phones ?? []).Where(p => p is not null && !string.IsNullOrWhiteSpace(p.Id)).GroupBy(p => p.Id).Select(g => g.First()).Take(20).ToList();
         foreach (var ph in c.Phones) { ph.Name = ph.Name?.Trim() ?? ""; if (ph.Pages is { Count: 0 }) ph.Pages = null; }
         c.Obs ??= new();
+        c.Discord ??= new();
+        c.Discord.ClientId = string.IsNullOrWhiteSpace(c.Discord.ClientId) ? null : c.Discord.ClientId.Trim();
+        c.Discord.ClientSecret = string.IsNullOrWhiteSpace(c.Discord.ClientSecret) ? null : c.Discord.ClientSecret.Trim();
         if (string.IsNullOrWhiteSpace(c.Obs.Url)) c.Obs.Url = "ws://127.0.0.1:4455";
         c.HomeAssistant ??= new();
         c.HomeAssistant.Url = string.IsNullOrWhiteSpace(c.HomeAssistant.Url) ? null : c.HomeAssistant.Url.Trim().TrimEnd('/');
@@ -627,8 +640,14 @@ public sealed partial class ConfigStore(string path)
     /// <summary>Makes sure the generated Wi-Fi token is written to disk so it stays stable across restarts.</summary>
     public void PersistGenerated()
     {
-        var c = Get();
-        var version = _stamp.Ticks;
+        AgentConfig c;
+        long version;
+        lock (_lock)
+        {
+            c = Get();
+            // The first save needs the missing-file stamp. For existing files, only overwrite a snapshot we read.
+            version = (_stamp == DateTime.MinValue && !File.Exists(path) ? _seen : _stamp).Ticks;
+        }
         try
         {
             var onDisk = JsonSerializer.Deserialize<AgentConfig>(File.ReadAllText(path), ReadOpts);

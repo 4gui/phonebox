@@ -112,6 +112,7 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
     private volatile QuotaProvider? _claude;
     private volatile QuotaProvider? _codex;
     private volatile QuotaProvider? _antigravity;
+    private volatile QuotaProvider? _workbuddy;
     private long _claudeNextAt;           // wall-clock ms of the next Claude request
     private int _claudeFailures;          // consecutive failed requests, for the back-off
     private long _nextCodexBar;
@@ -138,7 +139,9 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
             .Where(p => p.Id is not ("claude" or "codex" or "antigravity"))
             .Select(p => CodexBar.Select(null, p, now))
             .OfType<QuotaProvider>();
-        return core.Concat(extra).Select(p => Rolled(p, now)).ToList();
+        return core.Concat(extra)
+            .Concat(_workbuddy is { } workbuddy ? new[] { workbuddy } : [])
+            .Select(p => Rolled(p, now)).ToList();
     }
 
     /// <summary>A window whose reset time has passed started over: the last reading (kept while the tool is not used) no longer applies.</summary>
@@ -281,6 +284,10 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
                 }
             }
             CodexTick();
+
+            // WorkBuddy writes its own quota window and credit spend into its session log; reading it is local and cheap.
+            try { _workbuddy = WorkBuddyQuota.Read(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); }
+            catch (Exception ex) { log.LogDebug("workbuddy quota: {Msg}", ex.Message); }
 
             if (Environment.TickCount64 >= _nextAntigravity)
             {

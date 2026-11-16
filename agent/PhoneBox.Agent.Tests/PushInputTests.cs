@@ -7,6 +7,23 @@ using Xunit;
 
 public sealed class PushInputTests
 {
+    [Fact]
+    public void APartialPushSnapshotKeepsItsValidEntriesWithoutBreakingState()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"phonebox-push-{Guid.NewGuid():N}.json");
+        File.WriteAllText(path, """{"missing":null,"partial":{},"noTime":{"Data":"x","At":null},"text":"oops","valid":{"Data":"ready","At":1}}""");
+        try
+        {
+            var store = new PushStore(NullLogger<PushStore>.Instance, path);
+            var items = store.Snapshot();
+            var item = Assert.Single(items);
+            Assert.Equal("valid", item.Key);
+            Assert.Equal("ready", item.Value.Data.GetString());
+            Assert.Contains("ready", JsonSerializer.Serialize(items));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Theory]
     [InlineData("\"later\"")]
     [InlineData("true")]
@@ -14,7 +31,8 @@ public sealed class PushInputTests
     [InlineData("[]")]
     public void NonNumericPayloadTtlRemainsOrdinaryData(string ttl)
     {
-        var store = new PushStore(NullLogger<PushStore>.Instance, Path.Combine(Path.GetTempPath(), Guid.NewGuid()+".json"));
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+        var store = new PushStore(NullLogger<PushStore>.Instance, path);
         var data = JsonSerializer.Deserialize<JsonElement>("{\"ttl\":"+ttl+",\"value\":1}");
         Assert.Null(store.Set("input", data, null));
         Assert.Null(store.Get("input")!.ExpiresAt);
@@ -24,6 +42,8 @@ public sealed class PushInputTests
         Assert.Null(store.Set("explicit", data, 60));
         Assert.NotNull(store.Get("explicit")!.ExpiresAt);
         store.Clear();
+        store.Dispose(); // saves now instead of 2 s later, so the file can be removed
+        File.Delete(path);
     }
 
     [Theory]

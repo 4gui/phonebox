@@ -39,9 +39,9 @@
 .radio-carousel .radio-name{font-size:11px;-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block;width:100%}
 
 @container (min-height: 1px){
-  .radio-carousel .radio-card{width:84px; width:clamp(84px,78cqh,142px);padding:6px 7px; padding:clamp(6px,5cqh,12px) 7px;gap:4px; gap:clamp(4px,4cqh,9px)}
-  .radio-carousel .radio-logo-box{width:42px; width:clamp(42px,54cqh,88px);height:42px; height:clamp(42px,54cqh,88px);border-radius:10px; border-radius:clamp(10px,10cqh,16px)}
-  .radio-carousel .radio-name{font-size:9.5px; font-size:clamp(9.5px,7.5cqh,12px)}
+  .radio-carousel .radio-card{width:clamp(84px,78cqh,142px);padding:clamp(6px,5cqh,12px) 7px;gap:clamp(4px,4cqh,9px)}
+  .radio-carousel .radio-logo-box{width:clamp(42px,54cqh,88px);height:clamp(42px,54cqh,88px);border-radius:clamp(10px,10cqh,16px)}
+  .radio-carousel .radio-name{font-size:clamp(9.5px,7.5cqh,12px)}
 }
 
 .radio-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:24px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:rgba(10,15,24,.78);backdrop-filter:blur(6px);color:#e2e8f0;font-size:18px;line-height:1;display:none;place-items:center;cursor:pointer;padding:0;touch-action:manipulation;transition:opacity .15s ease}
@@ -52,4 +52,3 @@
 @media (pointer: coarse){
   .radio-nav{width:22px;height:34px;opacity:.72}
 }
-
