@@ -118,13 +118,21 @@ export async function safeFetch(url, opts = {}) {
 export async function api(path, method = 'GET', timeout = 2500) {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), timeout);
+  // The deadline rejects the caller itself instead of only aborting the request. Aborting is not enough: a body
+  // that started arriving can leave the read pending after the signal fires, and a caller waiting on it never
+  // reaches its own finally - that is what left the approval poll switched off for good.
+  const deadline = new Promise((_, fail) => setTimeout(() => fail(new Error('timeout')), timeout));
   try {
-    const r = await fetch(API + path, { method, signal: ctl.signal, cache: 'no-store', headers: PANEL_HEADERS });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const ct = r.headers.get('content-type') || '';
-    // Awaited on purpose: the timer is cleared in finally, so returning the promise unawaited let a response that
-    // sent its headers and then stalled hold the caller for good, past its own deadline.
-    return ct.includes('json') ? await r.json() : await r.text();
+    const work = (async () => {
+      const r = await fetch(API + path, { method, signal: ctl.signal, cache: 'no-store', headers: PANEL_HEADERS });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const ct = r.headers.get('content-type') || '';
+      // Awaited on purpose: the timer is cleared in finally, so returning the promise unawaited let a response that
+      // sent its headers and then stalled hold the caller for good, past its own deadline.
+      return ct.includes('json') ? await r.json() : await r.text();
+    })();
+    work.catch(() => {}); // whichever side loses the race must not surface as an unhandled rejection
+    return await Promise.race([work, deadline]);
   } finally { clearTimeout(t); }
 }
 
@@ -792,13 +800,12 @@ export async function loadApprovals() {
     // api() gives up after 2.5s by default: plenty for a tap, too little for a list request on a phone that
     // dozes, and the abort then looked exactly like a broken connection.
     approvals = stillOpen((await api('/approvals', 'GET', 8000)).items || []);
-    if (window.__pbClear) window.__pbClear('APPROVALS FAIL'); // it answered, so the warning is stale
   } catch (e) {
     const msg = (e && e.message) || String(e);
-    // A request cut short by our own timeout is ordinary here; the next tick retries it, so it earns no banner.
-    // Anything else (HTTP error, unreachable agent) is worth saying, but only while the panel believes it is
-    // online, or a computer that is simply off would fill the screen.
-    if (!/abort/i.test(msg) && online && window.__pbFail) window.__pbFail('APPROVALS FAIL ' + msg);
+    // Logged, never shown. The boot panel is for faults that need a new build; a list request that fails is
+    // routine, and an agent that goes away stays unreachable until it is back, so a banner here would outlive the
+    // outage it describes and teach the reader to ignore the box. The next tick and the live stream both retry.
+    if (!/abort|timeout/i.test(msg)) console.warn('approvals: list request failed:', msg);
     return;
   } finally { approvalBusy = false; }
   renderApproval();
@@ -852,11 +859,20 @@ export async function decide(decision) {
   if (!a) return;
   haptic();
   $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = true;
+  let accepted = false;
   try {
     await api(`/approvals/${encodeURIComponent(a.id)}?decision=${decision}`, 'POST', 4000);
+    accepted = true;
     if (decision === 'skip') toast(t('panel.questionWaiting'), 'warn');
     else toast(t(decision === 'allow' ? 'panel.allowedTool' : 'panel.deniedTool', { tool: a.tool }), decision === 'allow' ? 'ok' : 'err');
   } catch (_) { toast(t('panel.alreadyAnswered'), 'warn'); }
+  if (!accepted) {
+    // The agent never took the answer, so the prompt is still live and the command is still blocked. Hiding it
+    // here would leave nothing on screen while the computer waits; the buttons come back and the next list
+    // request settles whether the prompt really is gone.
+    $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = false;
+    return;
+  }
   answered.add(a.id);
   if (answered.size > answeredCap) answered.delete(answered.values().next().value);
   approvals = approvals.filter((x) => x.id !== a.id);
