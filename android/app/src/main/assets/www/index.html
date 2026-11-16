@@ -115,9 +115,16 @@
     window.__pbFail('REJECT ' + ((r && (r.stack || r.message)) || String(r)));
   });
   // main.js sets __pbUp at the end of its boot: a panel that rendered nothing by now never got there.
+  // A slow module graph can still arrive after this fires. The flag turning true means the message is stale, so
+  // take it back instead of leaving a working panel reporting a failure for the rest of the session.
   setTimeout(function () {
     if (window.__pbUp) return;
     window.__pbFail('the panel did not finish booting in 8s\nUA: ' + navigator.userAgent);
+    var watch = setInterval(function () {
+      if (!window.__pbUp) return;
+      clearInterval(watch);
+      window.__pbClear('the panel did not finish booting');
+    }, 500);
   }, 8000);
 })();
 </script>
