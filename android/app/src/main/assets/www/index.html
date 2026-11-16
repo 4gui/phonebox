@@ -105,6 +105,9 @@
   window.addEventListener('error', function (e) {
     var t = e && e.target;
     if (t && t !== window && (t.src || t.href)) { window.__pbFail('LOAD FAIL ' + (t.src || t.href)); return; }
+    // Browsers raise this as an error event when a ResizeObserver callback writes layout it observes.
+    // It is a throttle notice, not a failure: the loop is broken and the page keeps running.
+    if (e && /ResizeObserver loop/i.test(e.message || '')) return;
     if (e && e.message) window.__pbFail('ERR ' + e.message + (e.filename ? '  ' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
   }, true);
   window.addEventListener('unhandledrejection', function (e) {
