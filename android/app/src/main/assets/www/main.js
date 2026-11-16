@@ -1707,3 +1707,7 @@ function reportBattery() {
 }
 setInterval(reportBattery, 30_000);
 setTimeout(reportBattery, 5000);
+
+// index.html's boot watchdog waits for this: reaching the end of the module means the panel got through its first
+// render, so a throw anywhere above shows up as a message there instead of a black screen.
+window.__pbUp = true;
