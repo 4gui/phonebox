@@ -1,8 +1,12 @@
 /* Opt-in overrides only: old layouts retain their exact widget-specific styling. */
 .w.has-widget-radius { border-radius: var(--widget-radius) !important; }
 .w.has-widget-padding { padding: var(--widget-padding) !important; }
+/* Written out as plain selector lists rather than :is(), which needs Chromium 88: an engine that cannot parse
+   the selector drops the whole rule, and these are the controls inside a widget that have to follow its font. */
 .w.has-widget-font,
-.w.has-widget-font :is(button, input, textarea, select, .cmd-o, .cmd-o.big, .qt-mark) {
+.w.has-widget-font button, .w.has-widget-font input, .w.has-widget-font textarea,
+.w.has-widget-font select, .w.has-widget-font .cmd-o, .w.has-widget-font .cmd-o.big,
+.w.has-widget-font .qt-mark {
   font-family: var(--widget-font) !important;
 }
 .w.has-widget-font-scale {
@@ -12,7 +16,7 @@
 .w[data-widget-border="true"] { border: 1px solid var(--line) !important; }
 .w[data-widget-shadow="false"] { box-shadow: none !important; }
 .w[data-widget-shadow="true"] { box-shadow: 0 5px 16px rgba(0,0,0,.28) !important; }
-.w:is([data-widget-surface="cards"],[data-widget-surface="seamless"]) { background: var(--card); }
+.w[data-widget-surface="cards"], .w[data-widget-surface="seamless"] { background: var(--card); }
 .w[data-widget-surface="flat"] {
   background: #15191f;
   background: color-mix(in srgb, var(--bg) 94%, var(--text));
@@ -22,10 +26,14 @@
 }
 .w[data-widget-surface="borderless"] { background: transparent !important; background-image: none !important; }
 /* Keep control surfaces consistent without changing signal meters or round dials. */
-.w.has-widget-radius :is(.deck-channel,.deck-button,.deck-hold,.radio-card,.chip-btn,.sc) {
+.w.has-widget-radius .deck-channel, .w.has-widget-radius .deck-button,
+.w.has-widget-radius .deck-hold, .w.has-widget-radius .radio-card,
+.w.has-widget-radius .chip-btn, .w.has-widget-radius .sc {
   border-radius: min(var(--widget-radius), 12px);
 }
-.w[data-widget-surface="flat"] :is(.deck-channel,.deck-button,.deck-hold,.radio-card,.sc) {
+.w[data-widget-surface="flat"] .deck-channel, .w[data-widget-surface="flat"] .deck-button,
+.w[data-widget-surface="flat"] .deck-hold, .w[data-widget-surface="flat"] .radio-card,
+.w[data-widget-surface="flat"] .sc {
   background-image: none;
   box-shadow: none;
 }
