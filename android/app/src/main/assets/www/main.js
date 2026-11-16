@@ -122,7 +122,9 @@ export async function api(path, method = 'GET', timeout = 2500) {
     const r = await fetch(API + path, { method, signal: ctl.signal, cache: 'no-store', headers: PANEL_HEADERS });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const ct = r.headers.get('content-type') || '';
-    return ct.includes('json') ? r.json() : r.text();
+    // Awaited on purpose: the timer is cleared in finally, so returning the promise unawaited let a response that
+    // sent its headers and then stalled hold the caller for good, past its own deadline.
+    return ct.includes('json') ? await r.json() : await r.text();
   } finally { clearTimeout(t); }
 }
 
@@ -772,9 +774,33 @@ export function handleNotify(d) {
 export let approvals = [];
 export let approvalShown = null;
 
+// A list request sent before the answer can land after it and hand back the already answered prompt, which would
+// pop the card up again on its own and buzz. Ids answered from this phone are dropped from every later list.
+const answered = new Set();
+const answeredCap = 50;
+
+function stillOpen(items) {
+  return items.filter((x) => !answered.has(x.id));
+}
+
+let approvalBusy = false;
+
 export async function loadApprovals() {
-  if (PREVIEW) return; // permission prompts are answered on the phone, not in the preview
-  try { approvals = (await api('/approvals')).items || []; } catch (_) { return; }
+  if (PREVIEW || approvalBusy) return; // a slow answer must not stack up with the next tick
+  approvalBusy = true;
+  try {
+    // api() gives up after 2.5s by default: plenty for a tap, too little for a list request on a phone that
+    // dozes, and the abort then looked exactly like a broken connection.
+    approvals = stillOpen((await api('/approvals', 'GET', 8000)).items || []);
+    if (window.__pbClear) window.__pbClear('APPROVALS FAIL'); // it answered, so the warning is stale
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    // A request cut short by our own timeout is ordinary here; the next tick retries it, so it earns no banner.
+    // Anything else (HTTP error, unreachable agent) is worth saying, but only while the panel believes it is
+    // online, or a computer that is simply off would fill the screen.
+    if (!/abort/i.test(msg) && online && window.__pbFail) window.__pbFail('APPROVALS FAIL ' + msg);
+    return;
+  } finally { approvalBusy = false; }
   renderApproval();
 }
 
@@ -815,6 +841,12 @@ export function tickApproval() {
 }
 setInterval(tickApproval, 1000);
 
+// The live stream reconnects every minute on Wi-Fi and starts at the agent's current sequence, so anything emitted
+// while it was down is never replayed. An approval lost that way leaves the command waiting in the dark with nothing
+// on screen, so ask for the list outright as well instead of relying on the event alone. Only while the panel is on
+// screen: the answer is needed when someone is looking, and a phone in a pocket should not poll all night.
+setInterval(() => { if (!PREVIEW && !document.hidden) loadApprovals(); }, 5000);
+
 export async function decide(decision) {
   const a = approvals[0];
   if (!a) return;
@@ -825,6 +857,8 @@ export async function decide(decision) {
     if (decision === 'skip') toast(t('panel.questionWaiting'), 'warn');
     else toast(t(decision === 'allow' ? 'panel.allowedTool' : 'panel.deniedTool', { tool: a.tool }), decision === 'allow' ? 'ok' : 'err');
   } catch (_) { toast(t('panel.alreadyAnswered'), 'warn'); }
+  answered.add(a.id);
+  if (answered.size > answeredCap) answered.delete(answered.values().next().value);
   approvals = approvals.filter((x) => x.id !== a.id);
   renderApproval();
 }
@@ -1711,3 +1745,6 @@ setTimeout(reportBattery, 5000);
 // index.html's boot watchdog waits for this: reaching the end of the module means the panel got through its first
 // render, so a throw anywhere above shows up as a message there instead of a black screen.
 window.__pbUp = true;
+// A slow module graph can still arrive after the watchdog spoke: with the boot warning left in place the panel would
+// report a failure while working normally.
+if (window.__pbClear) window.__pbClear('the panel did not finish booting');
