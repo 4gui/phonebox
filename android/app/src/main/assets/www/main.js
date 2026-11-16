@@ -787,6 +787,10 @@ export let approvalShown = null;
 const answered = new Set();
 const answeredCap = 50;
 
+// Ids whose answer is on its way to the agent. Tracked per id rather than as one flag because a list request can
+// put a different prompt on screen while this one is still posting, and neither may unlock the other's buttons.
+const submitting = new Set();
+
 function stillOpen(items) {
   return items.filter((x) => !answered.has(x.id));
 }
@@ -821,7 +825,8 @@ export function renderApproval() {
     undim();
     if (nightOn) { wakeUntil = Date.now() + 60_000; setNight(false); }
     buzz('0,120,80,120,80,240');
-    $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = false;
+    // A prompt whose answer is still in flight comes back locked: it can be shown again while its own post runs.
+    $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = submitting.has(a.id);
   }
   // A question from Claude is answered at the PC (the terminal shows it); the phone only tells you it is waiting.
   const asking = a.kind === 'question';
@@ -856,8 +861,9 @@ setInterval(() => { if (!PREVIEW && !document.hidden) loadApprovals(); }, 5000);
 
 export async function decide(decision) {
   const a = approvals[0];
-  if (!a) return;
+  if (!a || submitting.has(a.id)) return;
   haptic();
+  submitting.add(a.id);
   $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = true;
   let accepted = false;
   try {
@@ -866,11 +872,16 @@ export async function decide(decision) {
     if (decision === 'skip') toast(t('panel.questionWaiting'), 'warn');
     else toast(t(decision === 'allow' ? 'panel.allowedTool' : 'panel.deniedTool', { tool: a.tool }), decision === 'allow' ? 'ok' : 'err');
   } catch (_) { toast(t('panel.alreadyAnswered'), 'warn'); }
+  finally { submitting.delete(a.id); }
   if (!accepted) {
     // The agent never took the answer, so the prompt is still live and the command is still blocked. Hiding it
     // here would leave nothing on screen while the computer waits; the buttons come back and the next list
-    // request settles whether the prompt really is gone.
-    $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = false;
+    // request settles whether the prompt really is gone. Only for this prompt though: a list request may have
+    // moved on to another approval while this one was in flight, and unlocking that one would let a second
+    // answer go out for a prompt whose own post is still running.
+    if (approvals[0] && approvals[0].id === a.id) {
+      $('apAllow').disabled = $('apDeny').disabled = $('apSkip').disabled = false;
+    }
     return;
   }
   answered.add(a.id);
